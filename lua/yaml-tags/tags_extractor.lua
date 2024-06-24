@@ -55,6 +55,9 @@ local function scan_md_files(directory)
 						local yaml_data = parse_yaml_front_matter(content)
 						if yaml_data and yaml_data.tags then
 							for _, tag in ipairs(yaml_data.tags) do
+								if tag == nil then
+									tag = "nil"
+								end
 								tags[tag] = true -- Using the tag as a key ensures uniqueness
 							end
 						end
@@ -129,7 +132,7 @@ local function save_tags(directory)
 	local json_str = cjson.encode(my_tags)
 	local filename = directory .. ".my_tags.json"
 	write_to_file(filename, json_str)
-	vim.notify("Tags saved to " .. filename, vim.log.levels.INFO)
+	vim.notify("Tags saved to " .. filename, vim.log.levels.TRACE)
 end
 
 -- Function to read JSON file content
