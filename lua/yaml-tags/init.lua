@@ -42,7 +42,14 @@ function M.setup()
     ]])
 end
 
-M.setup()
+-- Autocommand to setup nvim-cmp only for Markdown files
+-- vim.api.nvim_create_autocmd("FileType", {
+--   pattern = "markdown",
+--   callback = function()
+--     require("yaml-tags").setup()
+--   end,
+-- })
+-- M.setup()
 
 return M
 -- local M = {}

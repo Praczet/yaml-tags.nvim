@@ -31,7 +31,7 @@ end
 local function is_in_yaml_tags_section(lines, cursor)
 	local in_yaml = false
 	local in_tags_section = false
-	print("Line, cursor", lines, cursor)
+	-- print("Line, cursor", lines, cursor)
 
 	for i = cursor, 1, -1 do
 		local line = lines[i]
@@ -40,7 +40,7 @@ local function is_in_yaml_tags_section(lines, cursor)
 			break
 		end
 	end
-	print("in_yaml", in_yaml)
+	-- print("in_yaml", in_yaml)
 
 	-- If not in YAML, return false
 	if not in_yaml then
@@ -57,7 +57,7 @@ local function is_in_yaml_tags_section(lines, cursor)
 			break
 		end
 	end
-	print("in_tags_section", in_tags_section)
+	-- print("in_tags_section", in_tags_section)
 	return in_tags_section
 end
 
@@ -87,13 +87,13 @@ M.source.complete = function(self, request, callback)
 	local buf_name = vim.api.nvim_buf_get_name(bufnr)
 
 	-- Check if current buffer is Markdown
-	print("-- Check if current buffer is Markdown--")
+	-- print("-- Check if current buffer is Markdown--")
 	if not is_markdown_file(buf_name) then
 		callback({ items = {}, isIncomplete = false })
 		return
 	end
 
-	print("-- Get current buffer directory")
+	-- print("-- Get current buffer directory")
 	-- Get current buffer directory
 	local dir = get_current_buffer_directory()
 	if not dir then
@@ -101,7 +101,7 @@ M.source.complete = function(self, request, callback)
 		return
 	end
 
-	print("-- Path to .my_tags.json")
+	-- print("-- Path to .my_tags.json")
 	-- Path to .my_tags.json
 	local json_path = dir .. "/.my_tags.json"
 	local tags_data = read_json_file(json_path)
@@ -110,7 +110,7 @@ M.source.complete = function(self, request, callback)
 		return
 	end
 
-	print("-- Check if cursor is in YAML tags section")
+	-- print("-- Check if cursor is in YAML tags section")
 	-- Check if cursor is in YAML tags section
 	local cursor = vim.api.nvim_win_get_cursor(0)
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, cursor[1], false)
@@ -139,7 +139,7 @@ end
 
 -- Initialize the plugin and register ytags source with nvim-cmp
 function M.initialize_plugin()
-	print("Initializing ytags plugin")
+	-- print("Initializing ytags plugin")
 	cmp.register_source("ytags", M.source.new())
 end
 
