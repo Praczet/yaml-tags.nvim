@@ -1,5 +1,10 @@
 local cmp = require("cmp")
 local cjson = require("cjson")
+local telescope = require("telescope.builtin")
+local lfs = require("lfs")
+
+local read_file = require("yaml-tags.tags_extractor").read_file
+local parse_yaml_front_matter = require("yaml-tags.tags_extractor").parse_yaml_front_matter
 
 -- Function to read JSON file
 local function read_json_file(path)
@@ -135,6 +140,67 @@ M.source.complete = function(self, request, callback)
 	end
 
 	callback({ items = items, isIncomplete = false })
+end
+
+local function search_files_by_tag(tag)
+	local dir = get_current_buffer_directory()
+	if not dir then
+		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
+		return
+	end
+
+	local results = {}
+	local function scan_directory_for_tag(dir, tag)
+		for entry in lfs.dir(dir) do
+			if entry ~= "." and entry ~= ".." then
+				local path = dir .. "/" .. entry
+				local attr = lfs.attributes(path)
+				if attr.mode == "directory" then
+					scan_directory_for_tag(path, tag)
+				elseif attr.mode == "file" and entry:match("%.md$") then
+					local content = read_file(path)
+					if content and content:find("tags:") then
+						local yaml_data = parse_yaml_front_matter(content)
+						if yaml_data and yaml_data.tags then
+							for _, file_tag in ipairs(yaml_data.tags) do
+								if file_tag == tag then
+									table.insert(results, path)
+									break
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	scan_directory_for_tag(dir, tag)
+
+	telescope.find_files({
+		prompt_title = "Files containing tag: " .. tag,
+		results_title = "Files",
+		cwd = dir,
+		search_dirs = results,
+	})
+end
+
+local function get_tag_under_cursor()
+	local line = vim.api.nvim_get_current_line()
+	local tag = line:match("%- (.+)")
+	return tag
+end
+
+function M.search_files_by_tag_under_cursor()
+	local tag = get_tag_under_cursor()
+	if tag then
+		search_files_by_tag(tag)
+	else
+		vim.notify(
+			"No tag found under cursor.\n\nNote:\nThis function works only if you are in the YAML section and the cursor is on the line with the tag.",
+			vim.log.levels.WARN
+		)
+	end
 end
 
 -- Initialize the plugin and register ytags source with nvim-cmp

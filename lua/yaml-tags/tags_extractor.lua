@@ -183,4 +183,7 @@ vim.api.nvim_create_autocmd("BufWritePost", {
 return {
 	initialize_plugin = initialize_plugin,
 	save_tags = save_tags,
+	read_file = read_file,
+	parse_yaml_front_matter = parse_yaml_front_matter,
+	get_current_buffer_directory = get_current_buffer_directory,
 }

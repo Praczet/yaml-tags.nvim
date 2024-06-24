@@ -2,6 +2,7 @@ local M = {}
 
 M.extractor = require("yaml-tags.tags_extractor")
 M.completion = require("yaml-tags.tags_completion")
+M.sanitizer = require("yaml-tags.tags_sanitizer")
 
 -- Function to check if the current buffer is a Markdown file
 local function is_markdown_file()
@@ -40,6 +41,44 @@ function M.setup()
             autocmd FileType markdown lua require'yaml-tags'.setup_cmp()
         augroup END
     ]])
+	-- vim.api.nvim_set_keymap(
+	-- 	"n",
+	-- 	"<leader>nt",
+	-- 	'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
+	-- 	{ noremap = true, silent = true }
+	-- )
+	-- vim.api.nvim_set_keymap(
+	-- 	"n",
+	-- 	"<leader>nl",
+	-- 	'<cmd>lua require("yaml-tags.tags_telescope")()<CR>',
+	-- 	{ noremap = true, silent = true }
+	-- )
+	-- Configure which-key
+	require("which-key").setup({})
+
+	-- Register your custom mappings
+	local wk = require("which-key")
+
+	wk.register({
+		n = {
+			name = "Y-Tags", -- Prefix group name
+			t = {
+				'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
+				"Search Files by Tag Under Cursor",
+			},
+			l = { '<cmd>lua require("yaml-tags.telescope_tags")()<CR>', "List Tags and Files" },
+		},
+	}, { prefix = "<leader>" })
+
+	-- Load the sanitizer module
+
+	-- Set up an autocommand to sanitize YAML tags on save
+	vim.api.nvim_create_autocmd("BufWritePre", {
+		pattern = "*.md",
+		callback = function()
+			M.sanitizer.sanitize_current_buffer()
+		end,
+	})
 end
 
 M.setup()
