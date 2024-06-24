@@ -96,7 +96,8 @@ local function telescope_list_tags_and_files()
 								define_preview = function(self, entry, status)
 									local filepath = dir .. "/" .. entry.value
 									local bufnr = self.state.bufnr
-									vim.api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+									-- vim.api.nvim_buf_set_option(bufnr, "filetype", "markdown")
+									vim.bo[bufnr].filetype = "markdown"
 									vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
 									local lines = read_file(filepath)
 									if lines then
@@ -129,4 +130,4 @@ local function telescope_list_tags_and_files()
 		:find()
 end
 
-return telescope_list_tags_and_files
+return { telescope_list_tags_and_files = telescope_list_tags_and_files }

@@ -1,4 +1,8 @@
 local M = {}
+-- Default configuration
+M.config = {
+	sanitizer = true,
+}
 
 M.extractor = require("yaml-tags.tags_extractor")
 M.completion = require("yaml-tags.tags_completion")
@@ -26,7 +30,11 @@ function M.setup_cmp()
 	})
 end
 
-function M.setup()
+function M.setup(user_config)
+	M.config = vim.tbl_extend("force", M.config, user_config or {})
+end
+
+function M.initialize()
 	-- Set up your plugin setup here
 	if is_markdown_file() then
 		M.extractor.initialize_plugin()
@@ -66,22 +74,25 @@ function M.setup()
 				'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
 				"Search Files by Tag Under Cursor",
 			},
-			l = { '<cmd>lua require("yaml-tags.telescope_tags")()<CR>', "List Tags and Files" },
+			l = {
+				'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
+				"List Tags and Files",
+			},
 		},
 	}, { prefix = "<leader>" })
 
-	-- Load the sanitizer module
-
 	-- Set up an autocommand to sanitize YAML tags on save
-	vim.api.nvim_create_autocmd("BufWritePre", {
-		pattern = "*.md",
-		callback = function()
-			M.sanitizer.sanitize_current_buffer()
-		end,
-	})
+	if M.config.sanitizer then
+		vim.api.nvim_create_autocmd("BufWritePre", {
+			pattern = "*.md",
+			callback = function()
+				M.sanitizer.sanitize_current_buffer()
+			end,
+		})
+	end
 end
 
-M.setup()
+-- M.initialize()
 
 return M
 -- local M = {}

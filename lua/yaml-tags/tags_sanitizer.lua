@@ -1,5 +1,3 @@
-local lyaml = require("lyaml")
-
 local M = {}
 
 local function read_file(path)
@@ -12,23 +10,39 @@ local function read_file(path)
 	return content
 end
 
-local function write_file(path, content)
-	local file = io.open(path, "w")
-	if not file then
-		return false
+local function is_valid_yaml(yaml_content)
+	local valid = true
+	local inside_tag_section = false
+
+	for _, line in ipairs(vim.split(yaml_content, "\n")) do
+		if line:match("^%s*[^%-%s]") and not line:match("^[%w_-]+:%s") and not line:match("^[%w_-]+:$") then
+			print("invalid line: ", line)
+			valid = false
+			break
+		end
+
+		if line:match("^[%w_-]+:$") then
+			inside_tag_section = true
+		elseif inside_tag_section then
+			local tag = line:match("^%s*%- (.+)")
+			if not tag and not line:match("^%s*$") then
+				inside_tag_section = false
+			elseif not tag then
+				valid = false
+				break
+			end
+		end
 	end
-	file:write(content)
-	file:close()
-	return true
+	return valid
 end
 
 local function parse_yaml_front_matter(content)
-	local yaml_start, yaml_end = content:match("()---\n().-()\n---\n()")
+	local yaml_start, yaml_end = content:find("^%s*%-%-%-%s*\n(.-)\n%s*%-%-%-")
 	if not yaml_start or not yaml_end then
 		return nil, nil, nil
 	end
 	local yaml_content = content:sub(yaml_start, yaml_end)
-	return yaml_content, yaml_start, yaml_end
+	return yaml_content, yaml_start, yaml_end + 1
 end
 
 local function sanitize_tags(tags)
@@ -44,35 +58,72 @@ local function sanitize_tags(tags)
 	return unique_tags
 end
 
-local function sanitize_file(filepath)
-	local content = read_file(filepath)
-	if not content then
-		return
-	end
+local function sanitize_buffer()
+	local bufnr = vim.api.nvim_get_current_buf()
+	local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
 
 	local yaml_content, yaml_start, yaml_end = parse_yaml_front_matter(content)
-	if not yaml_content then
+	if not yaml_content or not yaml_start or not yaml_end then
 		return
 	end
 
-	local yaml_data = lyaml.load(yaml_content)
-	if not yaml_data or not yaml_data.tags then
+	if not is_valid_yaml(yaml_content) then
+		vim.notify("YAML front matter is malformed and was not modified.", vim.log.levels.WARN)
 		return
 	end
 
-	local sanitized_tags = sanitize_tags(yaml_data.tags)
+	-- Split yaml_content into lines
+	local lines = vim.split(yaml_content, "\n")
 
-	yaml_data.tags = sanitized_tags
+	-- Initialize variables to hold the sanitized YAML content
+	local lines_without_tags = {}
+	local sanitized_lines = {}
+	local in_tags_section = false
+	local tags = {}
 
-	local new_yaml_content = lyaml.dump({ yaml_data })
-	local new_content = content:sub(1, yaml_start - 1) .. new_yaml_content .. content:sub(yaml_end)
+	-- Process each line
+	for _, line in ipairs(lines) do
+		if line:match("^tags:%s*$") then
+			in_tags_section = true
+			table.insert(lines_without_tags, line)
+		elseif in_tags_section then
+			local tag = line:match("^  %- (.+)")
+			if tag then
+				table.insert(tags, tag)
+			else
+				in_tags_section = false
+				table.insert(lines_without_tags, line)
+			end
+		else
+			table.insert(lines_without_tags, line)
+		end
+	end
 
-	write_file(filepath, new_content)
+	-- Sanitize and add tags back
+	if #tags > 0 then
+		local sanitized_tags = sanitize_tags(tags)
+		for _, line in ipairs(lines_without_tags) do
+			table.insert(sanitized_lines, line)
+			if line:match("^tags:%s*$") then
+				for _, tag in ipairs(sanitized_tags) do
+					table.insert(sanitized_lines, "  - " .. tag)
+				end
+			end
+		end
+	else
+		sanitized_lines = lines_without_tags
+	end
+
+	-- Add the remaining lines back
+	local remaining_lines = vim.split(content:sub(yaml_end), "\n")
+	for _, line in ipairs(remaining_lines) do
+		table.insert(sanitized_lines, line)
+	end
+
+	-- Update buffer with sanitized YAML content
+	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, sanitized_lines)
 end
 
-M.sanitize_current_buffer = function()
-	local filepath = vim.api.nvim_buf_get_name(0)
-	sanitize_file(filepath)
-end
+M.sanitize_current_buffer = sanitize_buffer
 
 return M
