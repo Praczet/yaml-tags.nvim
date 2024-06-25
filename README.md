@@ -153,4 +153,4 @@ which contains a list of tags and information about date of last modification.
 - [ ] Some more tests
 - [ ] Few features:
   - [ ] add tag based on the word under the cursor
-  - [ ] add tag from selected text
+  - [ ] add tag from selected text [[#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
