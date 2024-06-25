@@ -49,6 +49,27 @@ require("yaml-tags").setup({
 
 ## Usage
 
+The yaml-tags plugin is enabled by default only for the markdown files.
+Most of the "job" are done in section `tags:` in the yaml front-matter.
+
+### Completion
+
+To activate completion the cursor has to be in the YAML front-matter `tags:` section:
+
+![Completion](media/ytags-completion.png)
+
+### Calling `tag under the cursor` and `tag list` commands
+
+![Which key bindings](media/ytags-which-keys.png)
+
+When the cursor is in the YAML front-matter `tags:` section over the tag plugin
+allow to view markdown files containing that tag `<leader>nt`.
+![Files with tag](media/ytags-file-sql.png)
+
+To see list off all tags just press `<leader>nl`.
+
+![Tag list](media/ytags-tags.png)
+
 ## Key Mappings
 
 You can set up key mappings to quickly access the plugin's features. For example:
@@ -95,6 +116,34 @@ require("yaml-tags").setup({
 require("yaml-tags").initialize()
 ```
 
+## Tag repository `.my_tags.json`
+
+In the director with the markdown files you can find the `.my_tags.json` file
+which contains a list of tags and information about date of last modification.
+
+```json
+{
+  "last_mod": "2024-06-25 11:33:28",
+  "tags": [
+    "cm",
+    "dataview",
+    "ideas",
+    "links",
+    "#meal",
+    "#obsidian",
+    "#procreate",
+    "admin",
+    "art",
+    "ascii",
+    "backup",
+    "base13",
+    "bash",
+    "blender",
+    "blog"
+  ]
+}
+```
+
 ## TODO
 
 - [ ] Configuration option for allowing / disallowing specific files
@@ -102,3 +151,6 @@ require("yaml-tags").initialize()
 - [ ] Tag under the cursor - should check if the cursor is in the YAML
       front-matter in `tags:` section
 - [ ] Some more tests
+- [ ] Few features:
+  - [ ] add tag based on the word under the cursor
+  - [ ] add tag from selected text
