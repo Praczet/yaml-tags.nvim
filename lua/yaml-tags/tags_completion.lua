@@ -36,7 +36,6 @@ end
 local function is_in_yaml_tags_section(lines, cursor)
 	local in_yaml = false
 	local in_tags_section = false
-	-- print("Line, cursor", lines, cursor)
 
 	for i = cursor, 1, -1 do
 		local line = lines[i]
@@ -45,9 +44,7 @@ local function is_in_yaml_tags_section(lines, cursor)
 			break
 		end
 	end
-	-- print("in_yaml", in_yaml)
 
-	-- If not in YAML, return false
 	if not in_yaml then
 		return false
 	end
@@ -62,11 +59,9 @@ local function is_in_yaml_tags_section(lines, cursor)
 			break
 		end
 	end
-	-- print("in_tags_section", in_tags_section)
 	return in_tags_section
 end
 
--- Module table
 local M = {}
 
 -- Custom completion source methods
@@ -92,13 +87,11 @@ M.source.complete = function(self, request, callback)
 	local buf_name = vim.api.nvim_buf_get_name(bufnr)
 
 	-- Check if current buffer is Markdown
-	-- print("-- Check if current buffer is Markdown--")
 	if not is_markdown_file(buf_name) then
 		callback({ items = {}, isIncomplete = false })
 		return
 	end
 
-	-- print("-- Get current buffer directory")
 	-- Get current buffer directory
 	local dir = get_current_buffer_directory()
 	if not dir then
@@ -106,8 +99,6 @@ M.source.complete = function(self, request, callback)
 		return
 	end
 
-	-- print("-- Path to .my_tags.json")
-	-- Path to .my_tags.json
 	local json_path = dir .. "/.my_tags.json"
 	local tags_data = read_json_file(json_path)
 	if not tags_data or not tags_data.tags then
@@ -115,7 +106,6 @@ M.source.complete = function(self, request, callback)
 		return
 	end
 
-	-- print("-- Check if cursor is in YAML tags section")
 	-- Check if cursor is in YAML tags section
 	local cursor = vim.api.nvim_win_get_cursor(0)
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, cursor[1], false)
@@ -133,6 +123,7 @@ M.source.complete = function(self, request, callback)
 			kind = cmp.lsp.CompletionItemKind.Enum,
 			insertText = tag,
 			filterText = tag,
+			-- This is temporary since I have no idea how to add this menu mark
 			labelDetails = {
 				description = "YAML Tag: " .. tag,
 			},
@@ -142,6 +133,7 @@ M.source.complete = function(self, request, callback)
 	callback({ items = items, isIncomplete = false })
 end
 
+-- Get files containing the specified tag
 local function search_files_by_tag(tag)
 	local dir = get_current_buffer_directory()
 	if not dir then
@@ -177,6 +169,7 @@ local function search_files_by_tag(tag)
 
 	scan_directory_for_tag(dir, tag)
 
+	-- Here I do not like the way how it is displayed
 	telescope.find_files({
 		prompt_title = "Files containing tag: " .. tag,
 		results_title = "Files",
@@ -185,12 +178,15 @@ local function search_files_by_tag(tag)
 	})
 end
 
+-- Gets the tag under the cursor (if line starts with -)
+-- TODO: This should be improved (check if the line is in YAML section)
 local function get_tag_under_cursor()
 	local line = vim.api.nvim_get_current_line()
 	local tag = line:match("%- (.+)")
 	return tag
 end
 
+-- Gets the tag under the cursor and searches for files with the tag
 function M.search_files_by_tag_under_cursor()
 	local tag = get_tag_under_cursor()
 	if tag then
@@ -205,7 +201,6 @@ end
 
 -- Initialize the plugin and register ytags source with nvim-cmp
 function M.initialize_plugin()
-	-- print("Initializing ytags plugin")
 	cmp.register_source("ytags", M.source.new())
 end
 

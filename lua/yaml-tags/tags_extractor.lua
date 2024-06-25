@@ -9,7 +9,7 @@ end
 
 -- Function to get current buffer directory
 local function get_current_buffer_directory()
-	local buf_path = vim.api.nvim_buf_get_name(0) -- Get the full path of the current buffer
+	local buf_path = vim.api.nvim_buf_get_name(0)
 	if buf_path == "" then
 		return nil
 	end
@@ -40,10 +40,8 @@ end
 -- Function to scan markdown files and extract tags
 local function scan_md_files(directory)
 	local tags = {}
-	-- print("Scanning directory:", directory)
 	local function scan_directory(dir)
 		for file in lfs.dir(dir) do
-			-- print("File:", file)
 			if file ~= "." and file ~= ".." then
 				local filepath = dir .. "/" .. file
 				local attr = lfs.attributes(filepath)
@@ -58,7 +56,7 @@ local function scan_md_files(directory)
 								if tag == nil then
 									tag = "nil"
 								end
-								tags[tag] = true -- Using the tag as a key ensures uniqueness
+								tags[tag] = true
 							end
 						end
 					end
@@ -164,6 +162,7 @@ local function initialize_plugin()
 	end
 end
 
+-- Creating User Commands **SaveTags**
 vim.api.nvim_create_user_command("SaveTags", function()
 	local directory = get_current_buffer_directory()
 	if directory then
@@ -173,12 +172,14 @@ vim.api.nvim_create_user_command("SaveTags", function()
 	end
 end, {})
 
+-- Adding an action for WritePost event
 vim.api.nvim_create_autocmd("BufWritePost", {
 	pattern = "*.md",
 	callback = function()
 		initialize_plugin()
 	end,
 })
+
 -- initialize_plugin()
 return {
 	initialize_plugin = initialize_plugin,

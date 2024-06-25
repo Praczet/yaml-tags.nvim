@@ -1,15 +1,6 @@
 local M = {}
 
-local function read_file(path)
-	local file = io.open(path, "r")
-	if not file then
-		return nil
-	end
-	local content = file:read("*a")
-	file:close()
-	return content
-end
-
+-- Function to check if YAML content is valid
 local function is_valid_yaml(yaml_content)
 	local valid = true
 	local inside_tag_section = false
@@ -36,6 +27,7 @@ local function is_valid_yaml(yaml_content)
 	return valid
 end
 
+-- Function to parse YAML front matter
 local function parse_yaml_front_matter(content)
 	local yaml_start, yaml_end = content:find("^%s*%-%-%-%s*\n(.-)\n%s*%-%-%-")
 	if not yaml_start or not yaml_end then
@@ -45,6 +37,7 @@ local function parse_yaml_front_matter(content)
 	return yaml_content, yaml_start, yaml_end + 1
 end
 
+-- Function to sanitize tags (remove duplicates and sort alphabetically)
 local function sanitize_tags(tags)
 	local unique_tags = {}
 	local seen = {}
@@ -58,6 +51,8 @@ local function sanitize_tags(tags)
 	return unique_tags
 end
 
+-- Function to sanitize buffer
+-- Gets YAML front matter and sanitizes tags
 local function sanitize_buffer()
 	local bufnr = vim.api.nvim_get_current_buf()
 	local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
@@ -72,16 +67,13 @@ local function sanitize_buffer()
 		return
 	end
 
-	-- Split yaml_content into lines
 	local lines = vim.split(yaml_content, "\n")
 
-	-- Initialize variables to hold the sanitized YAML content
 	local lines_without_tags = {}
 	local sanitized_lines = {}
 	local in_tags_section = false
 	local tags = {}
 
-	-- Process each line
 	for _, line in ipairs(lines) do
 		if line:match("^tags:%s*$") then
 			in_tags_section = true
@@ -99,7 +91,6 @@ local function sanitize_buffer()
 		end
 	end
 
-	-- Sanitize and add tags back
 	if #tags > 0 then
 		local sanitized_tags = sanitize_tags(tags)
 		for _, line in ipairs(lines_without_tags) do
@@ -114,13 +105,11 @@ local function sanitize_buffer()
 		sanitized_lines = lines_without_tags
 	end
 
-	-- Add the remaining lines back
 	local remaining_lines = vim.split(content:sub(yaml_end), "\n")
 	for _, line in ipairs(remaining_lines) do
 		table.insert(sanitized_lines, line)
 	end
 
-	-- Update buffer with sanitized YAML content
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, sanitized_lines)
 end
 

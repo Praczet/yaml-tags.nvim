@@ -9,6 +9,7 @@ local read_file = require("yaml-tags.tags_extractor").read_file
 local parse_yaml_front_matter = require("yaml-tags.tags_extractor").parse_yaml_front_matter
 local get_current_buffer_directory = require("yaml-tags.tags_extractor").get_current_buffer_directory
 
+-- Function to scan Markdown files and extract tags
 local function scan_md_files_for_tags(directory)
 	local tags = {}
 	local function scan_directory(dir)
@@ -39,6 +40,7 @@ local function scan_md_files_for_tags(directory)
 	return tags
 end
 
+-- Function to list tags and files
 local function telescope_list_tags_and_files()
 	local dir = get_current_buffer_directory()
 	if not dir then
