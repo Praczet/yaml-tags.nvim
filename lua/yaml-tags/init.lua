@@ -8,6 +8,8 @@ M.config = {
 		allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 	},
 	forbidden_words = { "and", "is", "or", "a", "the", "not" },
+	excluded_directories = {},
+	included_directories = {},
 }
 
 M.extractor = require("yaml-tags.tags_extractor")
@@ -33,17 +35,64 @@ function M.setup_cmp()
 		}),
 	})
 end
+-- Function to get the directory of the current buffer
+local function get_current_buffer_directory()
+	local buf_path = vim.api.nvim_buf_get_name(0)
+	if buf_path == "" then
+		return nil
+	end
+	local dir = buf_path:match("(.*/)")
+	return vim.fn.expand(dir)
+end
+
+-- Function to check if a directory is excluded
+local function is_excluded_directory(dir)
+	for _, excluded in ipairs(M.config.excluded_directories) do
+		if dir:find(excluded, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Function to check if a directory is included
+local function is_included_directory(dir)
+	if #M.config.included_directories == 0 then
+		return true
+	end
+	for _, included in ipairs(M.config.included_directories) do
+		if dir:find(included, 1, true) then
+			return true
+		end
+	end
+	return false
+end
 
 function M.setup(user_config)
 	M.config = vim.tbl_extend("force", M.config, user_config or {})
+	-- Expand directories
+	local expand_directory = function(dir)
+		return vim.fn.expand(dir)
+	end
+
+	for i, dir in ipairs(M.config.excluded_directories) do
+		M.config.excluded_directories[i] = expand_directory(dir)
+	end
+
+	for i, dir in ipairs(M.config.included_directories) do
+		M.config.included_directories[i] = expand_directory(dir)
+	end
 end
 
 function M.initialize()
-	if is_markdown_file() then
-		M.extractor.initialize_plugin()
-		M.completion.initialize_plugin()
-		M.setup_cmp()
+	local dir = get_current_buffer_directory()
+	if not dir or not is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
+		return
 	end
+
+	M.extractor.initialize_plugin()
+	M.completion.initialize_plugin()
+	M.setup_cmp()
 
 	vim.cmd([[
         augroup MarkdownYAMLTags
