@@ -4,9 +4,10 @@ local M = {}
 M.config = {
 	sanitizer = true,
 	tag_formatting = {
-		allow_camel_case = true,
+		allow_camel_case = false,
 		allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 	},
+	forbidden_words = { "and", "is", "or", "a", "the", "not" },
 }
 
 M.extractor = require("yaml-tags.tags_extractor")
@@ -70,14 +71,16 @@ function M.initialize()
 				"Add tags from selection",
 			},
 		},
-		v = {
-			name = "Y-Tags",
+	}, { prefix = "<leader>", mode = "n" })
+	wk.register({
+		n = {
+			name = "Y-Tags", -- Prefix group name
 			a = {
 				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
 				"Add tags from selection",
 			},
 		},
-	}, { prefix = "<leader>" })
+	}, { prefix = "<leader>", mode = "v" })
 
 	-- Set up an autocommand to sanitize YAML tags on save
 	if M.config.sanitizer then

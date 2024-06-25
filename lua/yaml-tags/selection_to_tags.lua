@@ -21,15 +21,23 @@ local function split_text(text)
 	return words
 end
 
--- Function to sanitize elements
 local function sanitize_elements(elements)
 	local sanitized_elements = {}
 	local seen = {}
 	local allowed_characters = config.tag_formatting.allowed_characters
+	local forbidden_words = config.forbidden_words or {}
+	local forbidden_set = {}
+	for _, word in ipairs(forbidden_words) do
+		forbidden_set[word] = true
+	end
+
 	for _, element in ipairs(elements) do
 		-- Remove non-allowed characters
 		local sanitized_element = element:gsub("[^" .. allowed_characters .. "]", "")
-		if sanitized_element ~= "" and not seen[sanitized_element] then
+		if not config.tag_formatting.allow_camel_case then
+			sanitized_element = sanitized_element:lower()
+		end
+		if sanitized_element ~= "" and not seen[sanitized_element] and not forbidden_set[sanitized_element] then
 			seen[sanitized_element] = true
 			table.insert(sanitized_elements, sanitized_element)
 		end
@@ -49,17 +57,21 @@ local function add_tags_to_yaml(tags)
 	for i, line in ipairs(lines) do
 		if line:match("^%-%-%-") then
 			if not yaml_start then
+				in_yaml = true
 				yaml_start = i
 			else
 				yaml_end = i
-				break
+				in_yaml = false
 			end
 		end
-		if in_yaml and line:match("^tags:%s*$") then
+		if in_yaml and line:match("^tags:") then
 			tags_section_start = i
-		elseif tags_section_start and line:match("^%S") then
-			tags_section_end = i
-			break
+		elseif tags_section_start ~= nil and line:match("^%S") and tags_section_end == nil then
+			if in_yaml then
+				tags_section_end = i
+			else
+				tags_section_end = yaml_end
+			end
 		end
 	end
 
@@ -86,7 +98,11 @@ local function add_tags_to_yaml(tags)
 	for _, tag in ipairs(tags) do
 		table.insert(new_tags, "  - " .. tag)
 	end
-	table.insert(lines, tags_section_end, table.concat(new_tags, "\n"))
+
+	-- Insert new tags lines
+	for i, tag_line in ipairs(new_tags) do
+		table.insert(lines, tags_section_end + i - 1, tag_line)
+	end
 
 	-- Update buffer with new lines
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
