@@ -161,25 +161,6 @@ local function initialize_plugin()
 		save_tags(directory)
 	end
 end
-
--- Creating User Commands **SaveTags**
-vim.api.nvim_create_user_command("SaveTags", function()
-	local directory = get_current_buffer_directory()
-	if directory then
-		save_tags(directory)
-	else
-		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
-	end
-end, {})
-
--- Adding an action for WritePost event
-vim.api.nvim_create_autocmd("BufWritePost", {
-	pattern = "*.md",
-	callback = function()
-		initialize_plugin()
-	end,
-})
-
 -- initialize_plugin()
 return {
 	initialize_plugin = initialize_plugin,

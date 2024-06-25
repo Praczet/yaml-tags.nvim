@@ -35,6 +35,7 @@ function M.setup_cmp()
 		}),
 	})
 end
+
 -- Function to get the directory of the current buffer
 local function get_current_buffer_directory()
 	local buf_path = vim.api.nvim_buf_get_name(0)
@@ -57,6 +58,8 @@ end
 
 -- Function to check if a directory is included
 local function is_included_directory(dir)
+	print(table.concat(M.config.included_directories, ", "))
+	print(dir)
 	if #M.config.included_directories == 0 then
 		return true
 	end
@@ -87,6 +90,7 @@ end
 function M.initialize()
 	local dir = get_current_buffer_directory()
 	if not dir or not is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
+		print("Not in a Markdown file or excluded directory")
 		return
 	end
 
@@ -130,6 +134,24 @@ function M.initialize()
 			},
 		},
 	}, { prefix = "<leader>", mode = "v" })
+
+	-- Creating User Commands **SaveTags**
+	vim.api.nvim_create_user_command("SaveTags", function()
+		local directory = get_current_buffer_directory()
+		if directory then
+			M.extractor.save_tags(directory)
+		else
+			vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
+		end
+	end, {})
+
+	-- Adding an action for WritePost event
+	vim.api.nvim_create_autocmd("BufWritePost", {
+		pattern = "*.md",
+		callback = function()
+			M.extractor.initialize_plugin()
+		end,
+	})
 
 	-- Set up an autocommand to sanitize YAML tags on save
 	if M.config.sanitizer then
