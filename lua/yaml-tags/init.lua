@@ -3,6 +3,10 @@ local M = {}
 -- Default configuration
 M.config = {
 	sanitizer = true,
+	tag_formatting = {
+		allow_camel_case = true,
+		allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+	},
 }
 
 M.extractor = require("yaml-tags.tags_extractor")
@@ -60,6 +64,17 @@ function M.initialize()
 			l = {
 				'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
 				"List Tags and Files",
+			},
+			a = {
+				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
+				"Add tags from selection",
+			},
+		},
+		v = {
+			name = "Y-Tags",
+			a = {
+				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
+				"Add tags from selection",
 			},
 		},
 	}, { prefix = "<leader>" })
