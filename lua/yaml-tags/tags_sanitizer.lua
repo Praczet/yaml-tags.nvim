@@ -7,7 +7,6 @@ local function is_valid_yaml(yaml_content)
 
 	for _, line in ipairs(vim.split(yaml_content, "\n")) do
 		if line:match("^%s*[^%-%s]") and not line:match("^[%w_-]+:%s") and not line:match("^[%w_-]+:$") then
-			print("invalid line: ", line)
 			valid = false
 			break
 		end

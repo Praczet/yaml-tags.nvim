@@ -16,12 +16,22 @@ M.extractor = require("yaml-tags.tags_extractor")
 M.completion = require("yaml-tags.tags_completion")
 M.sanitizer = require("yaml-tags.tags_sanitizer")
 
+local cmp = require("cmp")
+
 -- Function to check if the current buffer is a Markdown file
 local function is_markdown_file()
 	return vim.bo.filetype == "markdown"
 end
 
-local cmp = require("cmp")
+local function log_message(message)
+	local log_file = vim.fn.expand("~/.config/nvim/nvim.log")
+	local log_entry = os.date("%Y-%m-%d %H:%M:%S") .. "\t[yaml-tags]\n" .. message .. "\n"
+	local file = io.open(log_file, "a")
+	if file then
+		file:write(log_entry)
+		file:close()
+	end
+end
 
 function M.setup_cmp()
 	cmp.setup.filetype("markdown", {
@@ -58,8 +68,6 @@ end
 
 -- Function to check if a directory is included
 local function is_included_directory(dir)
-	print(table.concat(M.config.included_directories, ", "))
-	print(dir)
 	if #M.config.included_directories == 0 then
 		return true
 	end
@@ -90,7 +98,7 @@ end
 function M.initialize()
 	local dir = get_current_buffer_directory()
 	if not dir or not is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
-		print("Not in a Markdown file or excluded directory")
+		log_message("Directory: [" .. dir .. "] not in a Markdown file or excluded directory")
 		return
 	end
 
