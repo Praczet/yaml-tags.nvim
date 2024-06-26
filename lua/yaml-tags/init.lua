@@ -117,7 +117,7 @@ function M.initialize()
 	local wk = require("which-key")
 
 	wk.register({
-		n = {
+		y = {
 			name = "Y-Tags", -- Prefix group name
 			t = {
 				'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
@@ -134,7 +134,7 @@ function M.initialize()
 		},
 	}, { prefix = "<leader>", mode = "n" })
 	wk.register({
-		n = {
+		y = {
 			name = "Y-Tags", -- Prefix group name
 			a = {
 				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',

@@ -37,15 +37,52 @@ You can install `yaml-tags.nvim` using your preferred package manager. For examp
 }
 ```
 
+## Dependency
+
+- **nvim-cmp:** For completion.
+- **telescope.nvim:** For fuzzy finding and file search.
+- **lspkind-nvim:** For icons in completion.
+- **luafilesystem:** To interact with the file system.
+- **lua-cjson:** For JSON handling.
+
 ## Configuration
 
 You can configure the plugin by passing options to the setup function:
 
 ```lua
 require("yaml-tags").setup({
-  sanitizer = true, -- Enable or disable the sanitizer
+  sanitizer = true,
+ tag_formatting = {
+  allow_camel_case = false,
+  allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+ },
+ forbidden_words = { "and", "is", "or", "a", "the", "not" },
+ excluded_directories = {},
+ included_directories = {},
 })
+
 ```
+
+### Options
+
+- **sanitizer:** Enable or disable the sanitizer (default: _true_).
+- **tag_formatting:** Table to configure tag formatting options.
+  - **allow_camel_case** Allow camel case in tags (default: _false_ ).
+  - **allowed_characters:** String of allowed characters in tags
+    (default: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789").
+- **forbidden_words:** List of words that should not be allowed as tags
+  (default: { "and", "is", "or", "a", "the", "not" }).
+- **excluded_directories:** List of directories to exclude (default: {}).
+- **included_directories:** List of directories to include (default: {}).
+
+### Included and Excluded directories
+
+1. Absolute and Relative paths
+   > Directory can be absolute or relative to the current working directory
+2. If `included_directories` and `excluded_directories` are empty,
+   all directories are included
+3. If `included_directories` is not empty, only directories in the list are included
+4. If `excluded_directories` is not empty, only directories not in the list are included
 
 ## Usage
 
@@ -72,22 +109,16 @@ To see list off all tags just press `<leader>nl`.
 
 ## Key Mappings
 
-You can set up key mappings to quickly access the plugin's features. For example:
+This plugin registers the following key bindings using which-key:
+**Normal Mode**
 
-```lua
-vim.api.nvim_set_keymap(
-  "n",
-  "<leader>nt",
-  '<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
-  { noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-  "n",
-  "<leader>nl",
-  '<cmd>TelescopeTags<CR>',
-  { noremap = true, silent = true }
-)
-```
+- **\<leader\>ya:** Add tags from selection.
+- **\<leader\>yl:** List tags and files containing them.
+- **\<leader\>yt:** Search files by tag under cursor.
+
+**Visual Mode**
+
+- **\<leader\>na:** Add tags from selection.
 
 ## Autocommands
 
@@ -153,4 +184,4 @@ which contains a list of tags and information about date of last modification.
 - [ ] Some more tests
 - [x] Few features:
   - [x] add tag based on the word under the cursor
-  - [x] add tag from selected text [[#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
+  - [x] add tag from selected text [[\#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
