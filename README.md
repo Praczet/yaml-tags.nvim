@@ -118,7 +118,7 @@ This plugin registers the following key bindings using which-key:
 
 **Visual Mode**
 
-- **\<leader\>na:** Add tags from selection.
+- **\<leader\>ya:** Add tags from selection.
 
 ## Autocommands
 

@@ -47,6 +47,10 @@ end
 
 -- Function to add tags to YAML front matter
 local function add_tags_to_yaml(tags)
+	if #tags == 0 then
+		vim.notify("No tags found in selection or word under cursor", vim.log.WARN)
+		return
+	end
 	local bufnr = vim.api.nvim_get_current_buf()
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	local in_yaml = false
