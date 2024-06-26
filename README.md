@@ -146,11 +146,11 @@ which contains a list of tags and information about date of last modification.
 
 ## TODO
 
-- [ ] Configuration option for allowing / disallowing specific files
+- [x] Configuration option for allowing / disallowing specific files
       to be excluded from the tag search
-- [ ] Tag under the cursor - should check if the cursor is in the YAML
+- [x] Tag under the cursor - should check if the cursor is in the YAML
       front-matter in `tags:` section
 - [ ] Some more tests
-- [ ] Few features:
-  - [ ] add tag based on the word under the cursor
-  - [ ] add tag from selected text [[#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
+- [x] Few features:
+  - [x] add tag based on the word under the cursor
+  - [x] add tag from selected text [[#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
