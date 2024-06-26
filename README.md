@@ -11,9 +11,11 @@ This plugin offers the following features:
   - Creates a `.my_tags.json` file with a unique list of tags.
 - **Completion Source**:
   - Adds a new completion source with the tags.
-  - The completion source is available only when the cursor is in the YAML front-matter `tags:` section.
+  - The completion source is available only when the cursor is in the YAML
+    front-matter `tags:` section.
 - **Tag Sanitization**:
-  - Sanitizes tags in the YAML front-matter by removing duplicate tags and sorting them alphabetically.
+  - Sanitizes tags in the YAML front-matter by removing duplicate tags
+    and sorting them alphabetically.
   - This feature can be switched off via the configuration.
 - **Tag-based File Search**:
   - Provides a command to get the list of files containing the tag under the cursor.
@@ -21,7 +23,8 @@ This plugin offers the following features:
 
 ## Installation
 
-You can install `yaml-tags.nvim` using your preferred package manager. For example, with `lazy`:
+You can install `yaml-tags.nvim` using your preferred package manager.
+For example, with `lazy`:
 
 ```lua
  {
@@ -112,13 +115,14 @@ To see list off all tags just press `<leader>nl`.
 ## Key Mappings
 
 This plugin registers the following key bindings using which-key:
-**Normal Mode**
+
+### Normal Mode
 
 - **\<leader\>ya:** Add tags from selection.
 - **\<leader\>yl:** List tags and files containing them.
 - **\<leader\>yt:** Search files by tag under cursor.
 
-**Visual Mode**
+### Visual Mode
 
 - **\<leader\>ya:** Add tags from selection.
 
