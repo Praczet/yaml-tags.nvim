@@ -72,6 +72,8 @@ require("yaml-tags").setup({
     (default: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789").
 - **forbidden_words:** List of words that should not be allowed as tags
   (default: { "and", "is", "or", "a", "the", "not" }).
+- **extend_forbidden_words:** Allow to extend the forbidden words list rather
+  then replacing it. (default: _false_).
 - **excluded_directories:** List of directories to exclude (default: {}).
 - **included_directories:** List of directories to include (default: {}).
 

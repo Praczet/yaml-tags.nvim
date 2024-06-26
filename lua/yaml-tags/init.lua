@@ -7,7 +7,7 @@ M.config = {
 		allow_camel_case = false,
 		allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
 	},
-	forbidden_words = { "and", "is", "or", "a", "the", "not" },
+	forbidden_words = { "and", "is", "or", "a", "the", "not", "an" },
 	excluded_directories = {},
 	included_directories = {},
 }
@@ -80,7 +80,17 @@ local function is_included_directory(dir)
 end
 
 function M.setup(user_config)
-	M.config = vim.tbl_extend("force", M.config, user_config or {})
+	if user_config then
+		if user_config.forbidden_words then
+			if user_config.extend_forbidden_words then
+				M.config.forbidden_words = vim.list_extend(M.config.forbidden_words, user_config.forbidden_words)
+			else
+				M.config.forbidden_words = user_config.forbidden_words
+			end
+			user_config.forbidden_words = nil
+		end
+		M.config = vim.tbl_extend("force", M.config, user_config)
+	end
 	-- Expand directories
 	local expand_directory = function(dir)
 		return vim.fn.expand(dir)
