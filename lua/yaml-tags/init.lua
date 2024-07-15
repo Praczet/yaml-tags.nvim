@@ -141,7 +141,7 @@ function M.initialize()
     },
     {
       "<leader>ya",
-      '<cmd>lua require("yaml-tags.tags_telescope").selection_to_tags()<CR>',
+      '<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
       desc = "Add tags from selection",
     },
   })
