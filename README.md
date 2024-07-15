@@ -187,7 +187,7 @@ which contains a list of tags and information about date of last modification.
       to be excluded from the tag search
 - [x] Tag under the cursor - should check if the cursor is in the YAML
       front-matter in `tags:` section
-- [ ] Some more tests
+- [x] Some more tests
 - [x] Few features:
   - [x] add tag based on the word under the cursor
   - [x] add tag from selected text [[\#1](https://github.com/Praczet/yaml-tags.nvim/issues/1)]
