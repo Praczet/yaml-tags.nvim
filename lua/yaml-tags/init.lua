@@ -123,9 +123,9 @@ function M.initialize()
         augroup END
     ]])
 
-	require("which-key").setup({
-		window = { border = "single" },
-	})
+	-- require("which-key").setup({
+	-- 	window = { border = "single" },
+	-- })
 	local wk = require("which-key")
 
 	wk.add({
