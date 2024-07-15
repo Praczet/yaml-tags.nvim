@@ -126,32 +126,34 @@ function M.initialize()
 	require("which-key").setup({})
 	local wk = require("which-key")
 
-	wk.register({
-		y = {
-			name = "Y-Tags", -- Prefix group name
-			t = {
-				'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
-				"Search Files by Tag Under Cursor",
-			},
-			l = {
-				'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
-				"List Tags and Files",
-			},
-			a = {
-				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
-				"Add tags from selection",
-			},
+	wk.add({
+		mode = "n",
+		{ "<leader>y", group = "Y-Tags" },
+		{
+			"<leader>yt",
+			'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
+			desc = "Search Files by Tag Under Cursor",
 		},
-	}, { prefix = "<leader>", mode = "n" })
-	wk.register({
-		y = {
-			name = "Y-Tags", -- Prefix group name
-			a = {
-				'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
-				"Add tags from selection",
-			},
+		{
+			"<leader>yl",
+			'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
+			desc = "List Tags and Files",
 		},
-	}, { prefix = "<leader>", mode = "v" })
+		{
+			"<leader>ya",
+			'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
+			desc = "Add tags from selection",
+		},
+	})
+	wk.add({
+		mode = "v",
+		{ "<leader>y", group = "Y-Tags" },
+		{
+			"<leader>ya",
+			'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
+			desc = "Add tags from selection",
+		},
+	})
 
 	-- Creating User Commands **SaveTags**
 	vim.api.nvim_create_user_command("SaveTags", function()
