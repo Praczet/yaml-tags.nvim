@@ -138,7 +138,7 @@ function M.initialize()
 		},
 		{
 			"<leader>yl",
-			'<cmd>lua require("yaml-tags.tags_completion").telescope_list_tags_and_files()<CR>',
+			'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
 			desc = "List Tags and Files",
 		},
 		{
