@@ -63,6 +63,9 @@ local function is_in_yaml_tags_section(lines, cursor)
 end
 
 local M = {}
+M.config = {
+	kind_hl_group = "#ffc777", -- Default color, you can override this when setting up the plugin
+}
 
 -- Custom completion source methods
 M.source = {}
@@ -120,12 +123,11 @@ M.source.complete = function(self, request, callback)
 	for _, tag in ipairs(tags) do
 		table.insert(items, {
 			label = tag,
-			kind = cmp.lsp.CompletionItemKind.Enum,
 			insertText = tag,
 			filterText = tag,
-			-- This is temporary since I have no idea how to add this menu mark
-			labelDetails = {
-				description = "YAML Tag: " .. tag,
+			cmp = {
+				kind_text = "# Y-TAG",
+				kind_hl_group = "CmpItemKindYamlTag",
 			},
 		})
 	end
@@ -201,6 +203,8 @@ end
 
 -- Initialize the plugin and register ytags source with nvim-cmp
 function M.initialize_plugin()
+	local highlight_cmd = string.format("highlight CmpItemKindYamlTag guifg=%s", M.config.kind_hl_group)
+	vim.cmd(highlight_cmd)
 	cmp.register_source("ytags", M.source.new())
 end
 
