@@ -126,7 +126,7 @@ M.source.complete = function(self, request, callback)
 			insertText = tag,
 			filterText = tag,
 			cmp = {
-				kind_text = "# Y-TAG",
+				kind_text = "󰓹 Y-TAG",
 				kind_hl_group = "CmpItemKindYamlTag",
 			},
 		})
