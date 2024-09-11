@@ -108,7 +108,7 @@ end
 function M.initialize()
 	local dir = get_current_buffer_directory()
 	if not dir or not is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
-		log_message("Directory: [" .. dir .. "] not in a Markdown file or excluded directory")
+		log_message("Directory: [" .. (dir or "nul") .. "] not in a Markdown file or excluded directory")
 		return
 	end
 
