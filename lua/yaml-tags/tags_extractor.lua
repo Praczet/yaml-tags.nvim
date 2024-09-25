@@ -96,12 +96,16 @@ local function get_last_modified(folder_name)
 			if file ~= "." and file ~= ".." then
 				local file_path = dir .. "/" .. file
 				local attr = lfs.attributes(file_path)
-				if attr.mode == "directory" then
-					scan_directory(file_path)
-				elseif attr.mode == "file" then
-					if attr.modification > last_modified_time then
-						last_modified_time = attr.modification
+				if attr then
+					if attr.mode == "directory" then
+						scan_directory(file_path)
+					elseif attr.mode == "file" then
+						if attr.modification > last_modified_time then
+							last_modified_time = attr.modification
+						end
 					end
+				else
+					vim.notify("Could not get attributes for file: " .. file_path, vim.log.levels.ERROR)
 				end
 			end
 		end
