@@ -1,45 +1,16 @@
-local lyaml = require("lyaml")
 local cjson = require("cjson")
 local lfs = require("lfs")
+local utils = require("yaml-tags.utils")
 
 -- Function to get current time
 local function get_current_time()
 	return os.date("%Y-%m-%d %H:%M:%S")
 end
 
--- Function to get current buffer directory
-local function get_current_buffer_directory()
-	local buf_path = vim.api.nvim_buf_get_name(0)
-	if buf_path == "" then
-		return nil
-	end
-	local dir = buf_path:match("(.*/)")
-	return dir
-end
-
--- Function to read file content
-local function read_file(path)
-	local file = io.open(path, "r")
-	if file then
-		local content = file:read("*a")
-		file:close()
-		return content
-	end
-	return nil
-end
-
--- Function to parse YAML front matter
-local function parse_yaml_front_matter(content)
-	local front_matter = content:match("^%-%-%-(.-)%-%-%-")
-	if front_matter then
-		return lyaml.load(front_matter)
-	end
-	return nil
-end
-
 -- Function to scan markdown files and extract tags
 local function scan_md_files(directory)
 	local tags = {}
+	directory = utils.normalize_path(directory)
 	local function scan_directory(dir)
 		for file in lfs.dir(dir) do
 			if file ~= "." and file ~= ".." then
@@ -48,9 +19,9 @@ local function scan_md_files(directory)
 				if attr.mode == "directory" then
 					scan_directory(filepath)
 				elseif attr.mode == "file" and file:match("%.md$") then
-					local content = read_file(filepath)
+					local content = utils.read_file(filepath)
 					if content then
-						local yaml_data = parse_yaml_front_matter(content)
+						local yaml_data = utils.parse_yaml_front_matter(content)
 						if yaml_data and yaml_data.tags then
 							for _, tag in ipairs(yaml_data.tags) do
 								if tag == nil then
@@ -124,6 +95,7 @@ local function save_tags(directory)
 		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
 		return
 	end
+	directory = utils.normalize_path(directory)
 	local tags_table = scan_md_files(directory)
 	local tags_list = tags_table_to_list(tags_table)
 	table.sort(tags_list)
@@ -139,7 +111,7 @@ end
 
 -- Function to read JSON file content
 local function read_json_file(path)
-	local content = read_file(path)
+	local content = utils.read_file(path)
 	if content then
 		return cjson.decode(content)
 	end
@@ -148,7 +120,7 @@ end
 
 -- Function to initialize the plugin
 local function initialize_plugin()
-	local directory = get_current_buffer_directory()
+	local directory = utils.get_current_project_directory()
 	if not directory then
 		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
 		return
@@ -165,11 +137,22 @@ local function initialize_plugin()
 		save_tags(directory)
 	end
 end
+
+local function get_tags()
+	local directory = utils.get_current_project_directory()
+	local config_path = directory .. ".my_tags.json"
+	local config = read_json_file(config_path)
+	if config then
+		return config.tags
+	end
+	local tags_table = scan_md_files(directory)
+	return tags_table_to_list(tags_table)
+end
+
 -- initialize_plugin()
 return {
 	initialize_plugin = initialize_plugin,
 	save_tags = save_tags,
-	read_file = read_file,
-	parse_yaml_front_matter = parse_yaml_front_matter,
-	get_current_buffer_directory = get_current_buffer_directory,
+	parse_yaml_front_matter = utils.parse_yaml_front_matter,
+	get_tags = get_tags,
 }

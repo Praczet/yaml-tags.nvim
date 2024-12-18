@@ -10,51 +10,16 @@ M.config = {
 	forbidden_words = { "and", "is", "or", "a", "the", "not", "an" },
 	excluded_directories = {},
 	included_directories = {},
+	search_engine = "auto", -- options: "telescope", "fzf-lua", "auto"
+	autocomplete_engine = "auto", -- options: "cmp", "blink", "auto"
 }
 
-M.extractor = require("yaml-tags.tags_extractor")
-M.completion = require("yaml-tags.tags_completion")
-M.sanitizer = require("yaml-tags.tags_sanitizer")
+M.sanitizer = require("yaml-tags.sanitizer")
+M.extractor = require("yaml-tags.extractor")
 
-local cmp = require("cmp")
-
--- Function to check if the current buffer is a Markdown file
-local function is_markdown_file()
-	return vim.bo.filetype == "markdown"
-end
-
-local function log_message(message)
-	local log_file = vim.fn.expand("~/.config/nvim/nvim.log")
-	local log_entry = os.date("%Y-%m-%d %H:%M:%S") .. "\t[yaml-tags]\n" .. message .. "\n"
-	local file = io.open(log_file, "a")
-	if file then
-		file:write(log_entry)
-		file:close()
-	end
-end
-
-function M.setup_cmp()
-	cmp.setup.filetype("markdown", {
-		sources = cmp.config.sources({
-			{ name = "ytags" },
-			{ name = "buffer" },
-			{ name = "path" },
-			{ name = "nvim_lsp" },
-			{ name = "codeium" },
-			{ name = "snippets" },
-		}),
-	})
-end
-
--- Function to get the directory of the current buffer
-local function get_current_buffer_directory()
-	local buf_path = vim.api.nvim_buf_get_name(0)
-	if buf_path == "" then
-		return nil
-	end
-	local dir = buf_path:match("(.*/)")
-	return vim.fn.expand(dir)
-end
+local search_handler = require("yaml-tags.handlers.search")
+local autocomplete_handler = require("yaml-tags.handlers.autocomplete")
+local utils = require("yaml-tags.utils")
 
 -- Function to check if a directory is excluded
 local function is_excluded_directory(dir)
@@ -71,8 +36,11 @@ local function is_included_directory(dir)
 	if #M.config.included_directories == 0 then
 		return true
 	end
+
+	local normalized_dir = utils.normalize_path(dir)
 	for _, included in ipairs(M.config.included_directories) do
-		if dir:find(included, 1, true) then
+		local normalized_included = utils.normalize_path(included)
+		if normalized_dir:find(normalized_included, 1, true) then
 			return true
 		end
 	end
@@ -103,29 +71,35 @@ function M.setup(user_config)
 	for i, dir in ipairs(M.config.included_directories) do
 		M.config.included_directories[i] = expand_directory(dir)
 	end
+
+	-- Notify user if configured plugins are missing
+	if M.config.search_engine == "telescope" and not utils.is_plugin_installed("telescope") then
+		vim.notify("Telescope is configured but not installed!", vim.log.levels.WARN)
+	elseif M.config.search_engine == "fzf-lua" and not utils.is_plugin_installed("fzf-lua") then
+		vim.notify("fzf-lua is configured but not installed!", vim.log.levels.WARN)
+	end
+
+	if M.config.autocomplete_engine == "cmp" and not utils.is_plugin_installed("cmp") then
+		vim.notify("cmp is configured but not installed!", vim.log.levels.WARN)
+	elseif M.config.autocomplete_engine == "blink" and not utils.is_plugin_installed("blink") then
+		vim.notify("blink is configured but not installed!", vim.log.levels.WARN)
+	end
 end
 
 function M.initialize()
-	local dir = get_current_buffer_directory()
-	if not dir or not is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
-		log_message("Directory: [" .. (dir or "nul") .. "] not in a Markdown file or excluded directory")
+	local dir = utils.get_current_project_directory()
+	if not dir or not utils.is_markdown_file() or is_excluded_directory(dir) or not is_included_directory(dir) then
+		utils.log("Directory: [" .. (dir or "nul") .. "] not in a Markdown file or excluded directory")
 		return
 	end
 
-	M.extractor.initialize_plugin()
-	M.completion.initialize_plugin()
-	M.setup_cmp()
+	-- vim.cmd([[
+	--        augroup MarkdownYAMLTags
+	--            autocmd!
+	--            autocmd FileType markdown lua require'yaml-tags.handlers.autocomplete'.setup()
+	--        augroup END
+	--    ]])
 
-	vim.cmd([[
-        augroup MarkdownYAMLTags
-            autocmd!
-            autocmd FileType markdown lua require'yaml-tags'.setup_cmp()
-        augroup END
-    ]])
-
-	-- require("which-key").setup({
-	-- 	window = { border = "single" },
-	-- })
 	local wk = require("which-key")
 
 	wk.add({
@@ -133,17 +107,23 @@ function M.initialize()
 		{ "<leader>y", group = "+Y-Tags" },
 		{
 			"<leader>yt",
-			'<cmd>lua require("yaml-tags.tags_completion").search_files_by_tag_under_cursor()<CR>',
+			function()
+				search_handler.search_files_by_tag_under_cursor()
+			end,
 			desc = "Search Files by Tag Under Cursor",
 		},
 		{
 			"<leader>yl",
-			'<cmd>lua require("yaml-tags.tags_telescope").telescope_list_tags_and_files()<CR>',
+			function()
+				search_handler.list_tags_and_files()
+			end,
 			desc = "List Tags and Files",
 		},
 		{
 			"<leader>ya",
-			'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
+			function()
+				require("yaml-tags.selection_to_tags").selection_to_tags()
+			end,
 			desc = "Add tags from selection",
 		},
 	})
@@ -152,14 +132,16 @@ function M.initialize()
 		{ "<leader>y", group = "+Y-Tags" },
 		{
 			"<leader>ya",
-			'<cmd>lua require("yaml-tags.selection_to_tags").selection_to_tags()<CR>',
+			function()
+				require("yaml-tags.selection_to_tags").selection_to_tags()
+			end,
 			desc = "Add tags from selection",
 		},
 	})
 
 	-- Creating User Commands **SaveTags**
 	vim.api.nvim_create_user_command("SaveTags", function()
-		local directory = get_current_buffer_directory()
+		local directory = utils.get_current_project_directory()
 		if directory then
 			M.extractor.save_tags(directory)
 		else
@@ -174,6 +156,12 @@ function M.initialize()
 			M.extractor.initialize_plugin()
 		end,
 	})
+	-- vim.api.nvim_create_autocmd("FileType", {
+	-- 	pattern = "markdown",
+	-- 	callback = function()
+	-- 		require("yaml-tags.handlers.autocomplete").setup()
+	-- 	end,
+	-- })
 
 	-- Set up an autocommand to sanitize YAML tags on save
 	if M.config.sanitizer then
@@ -184,6 +172,11 @@ function M.initialize()
 			end,
 		})
 	end
+	require("yaml-tags.handlers.autocomplete").setup()
 end
+
+-- function M.autocomplete(...)
+-- 	autocomplete_handler.complete(...)
+-- end
 
 return M

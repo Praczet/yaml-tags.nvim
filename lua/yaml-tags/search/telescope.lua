@@ -4,51 +4,22 @@ local sorters = require("telescope.sorters")
 local previewers = require("telescope.previewers")
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local lfs = require("lfs")
-local read_file = require("yaml-tags.tags_extractor").read_file
-local parse_yaml_front_matter = require("yaml-tags.tags_extractor").parse_yaml_front_matter
-local get_current_buffer_directory = require("yaml-tags.tags_extractor").get_current_buffer_directory
+local get_current_buffer_directory = require("yaml-tags.extractor").get_current_buffer_directory
+local read_file = require("yaml-tags.extractor").read_file
 
--- Function to scan Markdown files and extract tags
-local function scan_md_files_for_tags(directory)
-	local tags = {}
-	local function scan_directory(dir)
-		for entry in lfs.dir(dir) do
-			if entry ~= "." and entry ~= ".." then
-				local path = dir .. "/" .. entry
-				local attr = lfs.attributes(path)
-				if attr.mode == "directory" then
-					scan_directory(path)
-				elseif attr.mode == "file" and entry:match("%.md$") then
-					local content = read_file(path)
-					if content then
-						local yaml_data = parse_yaml_front_matter(content)
-						if yaml_data and yaml_data.tags then
-							for _, tag in ipairs(yaml_data.tags) do
-								if not tags[tag] then
-									tags[tag] = {}
-								end
-								table.insert(tags[tag], path:sub(#directory + 2)) -- Store relative path
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	scan_directory(directory)
-	return tags
-end
+local utils = require("yaml-tags.utils")
+
+--f Function to scan Markdown files and extract tags
 
 -- Function to list tags and files
-local function telescope_list_tags_and_files()
+local function list_tags_and_files(opts)
 	local dir = get_current_buffer_directory()
 	if not dir then
 		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
 		return
 	end
 
-	local tags = scan_md_files_for_tags(dir)
+	local tags = utils.scan_md_files_for_tags(dir)
 
 	pickers
 		.new({}, {
@@ -132,4 +103,4 @@ local function telescope_list_tags_and_files()
 		:find()
 end
 
-return { telescope_list_tags_and_files = telescope_list_tags_and_files }
+return { list_tags_and_files = list_tags_and_files }
