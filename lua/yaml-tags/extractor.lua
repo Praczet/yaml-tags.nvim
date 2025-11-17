@@ -2,6 +2,10 @@ local cjson = require("cjson")
 local lfs = require("lfs")
 local utils = require("yaml-tags.utils")
 
+if cjson.encode_empty_table_as_object then
+	cjson.encode_empty_table_as_object(false)
+end
+
 -- Function to get current time
 local function get_current_time()
 	return os.date("%Y-%m-%d %H:%M:%S")
@@ -40,10 +44,22 @@ local function scan_md_files(directory)
 end
 
 -- Function to convert tags table to list
+-- local function tags_table_to_list(tags_table)
+-- 	local tags_list = {}
+-- 	for tag, _ in pairs(tags_table) do
+-- 		table.insert(tags_list, tag)
+-- 	end
+-- 	return tags_list
+-- end
+
 local function tags_table_to_list(tags_table)
 	local tags_list = {}
+	-- Iterate over the keys (tags) in the tags_table (assuming it's a map: tag -> count/flag)
 	for tag, _ in pairs(tags_table) do
-		table.insert(tags_list, tag)
+		-- Ensure only non-nil, non-empty strings are added
+		if type(tag) == "string" and tag ~= "" then
+			table.insert(tags_list, tag) -- table.insert ensures consecutive integer keys starting at 1
+		end
 	end
 	return tags_list
 end
@@ -62,26 +78,37 @@ end
 -- Function to get the last modification time using lfs
 local function get_last_modified(folder_name)
 	local last_modified_time = 0
+
 	local function scan_directory(dir)
 		for file in lfs.dir(dir) do
 			if file ~= "." and file ~= ".." then
 				local file_path = dir .. "/" .. file
-				local attr = lfs.attributes(file_path)
-				if attr then
+				local ok, attr = pcall(lfs.attributes, file_path)
+
+				if ok and attr then
 					if attr.mode == "directory" then
 						scan_directory(file_path)
 					elseif attr.mode == "file" then
-						if attr.modification > last_modified_time then
-							last_modified_time = attr.modification
+						-- 🔹 Only care about Markdown files
+						if file:match("%.md$") and attr.modification then
+							if attr.modification > last_modified_time then
+								last_modified_time = attr.modification
+							end
 						end
 					end
 				else
-					vim.notify("Could not get attributes for file: " .. file_path, vim.log.levels.ERROR)
+					-- This will still log, but only as TRACE/DEBUG if you prefer
+					if vim and vim.notify then
+						local level = vim.log and vim.log.levels and vim.log.levels.TRACE or 0
+						vim.notify("yaml-tags: Could not get attributes for file: " .. file_path, level)
+					end
 				end
 			end
 		end
 	end
+
 	scan_directory(folder_name)
+
 	if last_modified_time > 0 then
 		return os.date("%Y-%m-%d %H:%M:%S", last_modified_time)
 	else
@@ -98,12 +125,16 @@ local function save_tags(directory)
 	directory = utils.normalize_path(directory)
 	local tags_table = scan_md_files(directory)
 	local tags_list = tags_table_to_list(tags_table)
+
+	-- vim.notify("Tags Table: " .. vim.inspect(tags_table), vim.log.levels.TRACE)
 	table.sort(tags_list)
+
 	local my_tags = {
 		last_mod = get_current_time(),
 		tags = tags_list,
 	}
-	local json_str = cjson.encode(my_tags)
+
+	local json_str = vim.json.encode(my_tags)
 	local filename = directory .. ".my_tags.json"
 	write_to_file(filename, json_str)
 	vim.notify("Tags saved to " .. filename, vim.log.levels.TRACE)
@@ -125,12 +156,17 @@ local function initialize_plugin()
 		vim.notify("Could not determine the current buffer directory.", vim.log.levels.ERROR)
 		return
 	end
+	directory = utils.normalize_path(directory)
 	local config_path = directory .. ".my_tags.json"
 	local config = read_json_file(config_path)
 	if config then
 		local last_mod_time = config.last_mod
 		local last_modified = get_last_modified(directory)
-		if last_modified and last_modified > last_mod_time then
+		if not last_mod_time or not last_modified then
+			save_tags(directory)
+			return
+		end
+		if last_modified > last_mod_time then
 			save_tags(directory)
 		end
 	else
@@ -140,7 +176,7 @@ end
 
 local function get_tags()
 	local directory = utils.get_current_project_directory()
-	local config_path = directory .. ".my_tags.json"
+	local config_path = utils.normalize_path(directory) .. ".my_tags.json"
 	local config = read_json_file(config_path)
 	if config then
 		return config.tags

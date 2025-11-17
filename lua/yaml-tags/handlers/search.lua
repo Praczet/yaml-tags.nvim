@@ -68,15 +68,19 @@ end
 
 -- Public search function
 function M.list_tags_and_files(opts)
-	tags = require("yaml-tags.extractor").get_tags()
+	local tags = require("yaml-tags.extractor").get_tags()
+
 	if is_plugin_installed("telescope") then
 		local telescope = require("yaml-tags.search.telescope")
 		telescope.list_tags_and_files(opts)
 	elseif is_plugin_installed("fzf-lua") then
 		local fzf = require("yaml-tags.search.fzf")
 		fzf.show_tags(tags)
+	elseif is_plugin_installed("snacks") then
+		local snacks_picker = require("yaml-tags.search.snacks")
+		snacks_picker.show_tags(tags)
 	else
-		vim.notify("Neither Telescope nor fzf-lua is installed!", vim.log.levels.ERROR)
+		vim.notify("No supported picker installed (telescope, fzf-lua, snacks.nvim).", vim.log.levels.ERROR)
 	end
 end
 
@@ -94,6 +98,9 @@ function M.search_files_by_tag_under_cursor(opts)
 	elseif is_plugin_installed("fzf-lua") then
 		local fzf = require("yaml-tags.search.fzf")
 		fzf.show_files_with_tag(files)
+	elseif is_plugin_installed("snacks") then
+		local snack = require("yaml-tags.search.snacks")
+		snack.show_files_with_tag(files)
 	else
 		vim.notify("Neither Telescope nor fzf-lua is installed!", vim.log.levels.ERROR)
 	end

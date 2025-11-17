@@ -77,6 +77,8 @@ function M.setup(user_config)
 		vim.notify("Telescope is configured but not installed!", vim.log.levels.WARN)
 	elseif M.config.search_engine == "fzf-lua" and not utils.is_plugin_installed("fzf-lua") then
 		vim.notify("fzf-lua is configured but not installed!", vim.log.levels.WARN)
+	elseif M.config.search_engine == "snacks" and not utils.is_plugin_installed("snacks") then
+		vim.notify("fzf-lua is configured but not installed!", vim.log.levels.WARN)
 	end
 
 	if M.config.autocomplete_engine == "cmp" and not utils.is_plugin_installed("cmp") then
@@ -92,13 +94,6 @@ function M.initialize()
 		utils.log("Directory: [" .. (dir or "nul") .. "] not in a Markdown file or excluded directory")
 		return
 	end
-
-	-- vim.cmd([[
-	--        augroup MarkdownYAMLTags
-	--            autocmd!
-	--            autocmd FileType markdown lua require'yaml-tags.handlers.autocomplete'.setup()
-	--        augroup END
-	--    ]])
 
 	local wk = require("which-key")
 
@@ -172,7 +167,7 @@ function M.initialize()
 			end,
 		})
 	end
-	require("yaml-tags.handlers.autocomplete").setup()
+	autocomplete_handler.setup()
 end
 
 -- function M.autocomplete(...)

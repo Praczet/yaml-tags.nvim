@@ -82,11 +82,41 @@ end
 
 function M.parse_yaml_front_matter(content)
 	local front_matter = content:match("^%-%-%-(.-)%-%-%-")
-	if front_matter then
-		return lyaml.load(front_matter)
+	if not front_matter then
+		return nil
 	end
-	return nil
+
+	-- Clean the YAML content before parsing
+	local cleaned_front_matter = front_matter:gsub("-\n", "\n") -- Remove lines with just "-"
+	cleaned_front_matter = cleaned_front_matter:gsub("-%s+$", "") -- Remove trailing hyphen with spaces
+
+	-- Parse the cleaned YAML
+	local data = lyaml.load(cleaned_front_matter)
+	if not data then
+		return nil
+	end
+
+	-- Filter out empty/null/whitespace-only tags
+	if data.tags then
+		local cleaned_tags = {}
+		for _, tag in ipairs(data.tags) do
+			if tag and tag:gsub("%s+", "") ~= "" then
+				table.insert(cleaned_tags, tag)
+			end
+		end
+		data.tags = cleaned_tags
+	end
+
+	return data
 end
+
+-- function M.parse_yaml_front_matter(content)
+-- 	local front_matter = content:match("^%-%-%-(.-)%-%-%-")
+-- 	if front_matter then
+-- 		return lyaml.load(front_matter)
+-- 	end
+-- 	return nil
+-- end
 
 function M.read_file(path)
 	local file = io.open(path, "r")

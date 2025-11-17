@@ -7,19 +7,7 @@ local function cmp_setup()
 end
 
 -- Autocomplete implementation for blink
-local function blink_setup()
-	local blink = require("blink.cmp")
-	blink.setup({
-		sources = {
-			completion = {
-				enabled_providers = { "lsp", "path", "snippets", "buffer", "ytags" },
-			},
-			providers = {
-				ytags = { name = "Y-tag", module = "yaml-tags.completion.blink" },
-			},
-		},
-	})
-end
+local function blink_setup() end
 
 -- Public autocomplete function
 function M.setup()
